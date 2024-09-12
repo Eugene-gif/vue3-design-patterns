@@ -33,6 +33,7 @@ import { reactive } from "vue";
 import Modal from "./Modal.vue";
 
 const _current = reactive({ name: "", resolve: null, reject: null });
+
 const api = {
   active() {
     return _current.name;
@@ -54,6 +55,7 @@ const api = {
     _current.name = "";
   }
 };
+
 const plugin = {
   install(App, options) {
     App.component("Modal", Modal); // Register global component

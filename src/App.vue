@@ -1,13 +1,12 @@
 <script setup>
-  import MainHeader from "@/components/Headers/MainHeader.vue";
-  import ToDoProject from "@/components/ToDoProject/ToDoProject.vue";
+  import Sidebar from "@/components/Sidebar/Sidebar.vue";
 </script>
 
 <template>
   <div class="app">
-    <MainHeader></MainHeader>
+    <Sidebar />
     <main class="w3-container">
-      <ToDoProject></ToDoProject>
+      <router-view></router-view>
     </main>
   </div>
 </template>
@@ -15,7 +14,14 @@
 <style scoped>
   .app {
     width: 100vw;
-    min-height: 100vh;
+    height: 100vh;
     padding: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 12rem auto;
+  }
+
+  main {
+    overflow: hidden auto;
   }
 </style>

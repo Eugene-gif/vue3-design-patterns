@@ -1,16 +1,26 @@
 <script setup>
-  import { ref, inject } from "vue";
-
-  import ToDoItemForm from "./parts/ToDoItemForm.vue";
-  import ToDoList from "./parts/ToDoList.vue";
-  import ToDoFilter from "./parts/ToDoFilter.vue";
-  import ToDoSummary from "./parts/ToDoSummary.vue";
+  import { ref, inject, onMounted, watch } from "vue";
+  import { useRouter } from "vue-router";
+  import TodoItemForm from "./parts/ToDoItemForm.vue";
+  import TodoList from "./parts/ToDoList.vue";
+  import TodoFilter from "./parts/ToDoFilter.vue";
+  import TodoSummary from "./parts/ToDoSummary.vue";
   import todoService from "@/services/todo";
+  import eventBus from "@/services/eventBus";
 
-  const $modals = inject("$modals");
-  const _filter = ref("");
-  const _item = ref(todoService.getDefault());
-  const _items = ref([]);
+  const $props = defineProps(["id"]),
+    $modals = inject("$modals"),
+    $router = useRouter(),
+    _filter = ref(""),
+    _item = ref(todoService.getDefault()),
+    _items = ref([]),
+    _project_name = ref("");
+
+  // First time mounted
+  onMounted(loadProject);
+
+  // Watch for future changes
+  watch(() => $props.id, loadProject);
 
   // Shows a modal to create or edit a to-do item
   function showModal(new_item = true, item = {}) {
@@ -37,6 +47,7 @@
             alert("Error updating the item");
           }
         }
+        saveProject();
       },
       () => {
         // Handle cancellation, in this case, just ignore.
@@ -50,12 +61,14 @@
         let index = getIndex(item);
         if (index >= 0) {
           _items.value.splice(index, 1);
+          saveProject();
         }
       },
       () => {}
     );
   }
 
+  // Auxiliar function
   function getIndex(item) {
     let index = _items.value.findIndex((it) => {
       return it.id == item.id;
@@ -69,27 +82,60 @@
 
   function toggleStatus(item) {
     item.status = todoService.toggleStatus(item.status);
+    saveProject();
+  }
+
+  // Deletes the entire project and triggers a system-wide update event
+  function deleteProject() {
+    $modals.show("deleteProject").then(
+      () => {
+        // delete project
+        todoService.deleteProject($props.id);
+        eventBus.emit("#UpdateProjects");
+        $router.push({ name: "landing" });
+      },
+      () => {}
+    );
+  }
+
+  // Chapter 5
+  function loadProject() {
+    // Project name
+    _project_name.value = todoService.getProjectName($props.id);
+
+    // Items
+    _items.value = todoService.loadProject($props.id);
+  }
+
+  function saveProject() {
+    todoService.saveProject($props.id, _items.value);
   }
 </script>
 
 <template>
   <div class="project-container">
+    <!-- Project name -->
+    <div class="header-container">
+      <h1>{{ _project_name }}</h1>
+      <button @click="deleteProject()">Delete project</button>
+    </div>
+
     <!-- Summary -->
-    <ToDoSummary
+    <TodoSummary
       :items="_items"
       class="w3-margin-bottom"
-    />
+    ></TodoSummary>
 
     <!-- Filter bar -->
     <div class="w3-margin-bottom">
-      <ToDoFilter
+      <TodoFilter
         v-model="_filter"
         class="flex-grow"
-      />
+      ></TodoFilter>
     </div>
 
     <!-- Todo list -->
-    <ToDoList
+    <TodoList
       v-model="_items"
       :filter="_filter"
       @toggle="toggleStatus"
@@ -103,14 +149,14 @@
         <i class="fa-solid fa-square-plus"></i>
         New item
       </button>
-    </ToDoList>
+    </TodoList>
 
     <!-- Modals -->
     <Modal
       name="newEditItem"
       title="To Do Item"
     >
-      <ToDoItemForm v-model="_item" />
+      <TodoItemForm v-model="_item"></TodoItemForm>
     </Modal>
 
     <Modal
@@ -125,10 +171,26 @@
         This action cannot be undone.
       </p>
     </Modal>
+
+    <Modal
+      name="deleteProject"
+      title="Delete the Project"
+    >
+      <h3>Attention</h3>
+      <p class="w3-pale-red w3-text-red w3-padding">
+        This action cannot be undone. Please confirm.
+      </p>
+    </Modal>
   </div>
 </template>
 
 <style scoped>
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+    align-items: center;
+  }
   .project-container {
     max-width: 56rem;
     padding: 1rem;
