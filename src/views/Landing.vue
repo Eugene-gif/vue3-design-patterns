@@ -2,9 +2,10 @@
   import { inject, ref } from "vue";
   import eventBus from "@/services/eventBus";
   import todoService from "@/services/todo";
+  import ParentPinia from "@/components/PiniaComponents/ParentPinia.vue";
 
-  const $modals = inject("$modals"),
-    _project_name = ref("");
+  const $modals = inject("$modals");
+  const _project_name = ref("");
 
   function newProject() {
     _project_name.value = "";
@@ -32,6 +33,11 @@
     <p>This route was defined as static in our router.</p>
     <button @click="newProject()">New project</button>
 
+    <!-- Example pinia component -->
+    <div class="pinia-wrapper">
+      <ParentPinia />
+    </div>
+
     <!-- Modals -->
     <Modal
       name="#NewProject"
@@ -39,10 +45,10 @@
     >
       <strong>Name</strong>
       <input
-        type="text"
-        class="w3-input w3-border"
-        placeholder="Enter project name..."
         v-model="_project_name"
+        type="text"
+        placeholder="Enter project name..."
+        class="w3-input w3-border"
       />
     </Modal>
   </div>
@@ -50,9 +56,13 @@
 
 <style scoped>
   .landing-wrapper {
-    padding: 10rem;
+    padding: 2rem;
     margin: 0 auto;
     min-width: 40rem;
     max-width: 60rem;
+
+    .pinia-wrapper {
+      margin: 50px 0 0 0;
+    }
   }
 </style>
